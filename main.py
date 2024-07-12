@@ -57,19 +57,26 @@ async def get_weather(ctx: discord.ApplicationContext):
     # Make a Request to the Weather API
     apiUrl = "https://api.data.gov.sg/v1/environment/24-hour-weather-forecast"
     weatherData = requests.get(apiUrl).json()
+    print(weatherData)
     
+    '''
     # Extract relevant information from the weather data
     forecast = weatherData.get('items', [])[0].get('general', {}).get('forecast', 'No data available')
     temperature = weatherData.get('items', [])[0].get('general', {}).get('temperature', {})
     temperature_range = f"{temperature.get('low', 'N/A')}°C - {temperature.get('high', 'N/A')}°C"
+    '''
+    
+    # Extract relevant information from the weather data
+    forecast = weatherData["items"][0]["general"]["forecast"]
+    temperature = weatherData["items"][0]["general"]["temperature"]
+    temperature_range = f"{temperature["low"]}°C - {temperature["high"]}°C"
     
     # Format the message
     weather_message = (
-        f"**24-Hour Weather Forecast**\n"
+        "**24-Hour Weather Forecast**\n"
         f"Forecast: {forecast}\n"
         f"Temperature: {temperature_range}\n"
     )
-    
     await ctx.respond(weather_message)
     
 # Run the Bot
