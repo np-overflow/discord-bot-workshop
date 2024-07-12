@@ -58,6 +58,8 @@ async def get_weather(ctx: discord.ApplicationContext):
     # Make a Request to the Weather API
     apiUrl = "https://api.data.gov.sg/v1/environment/24-hour-weather-forecast"
     weatherData = requests.get(apiUrl).json()
+    print(weatherData)
+    
     
     # Extract relevant information from the weather data
     forecast = weatherData["items"][0]["general"]["forecast"]
@@ -96,7 +98,7 @@ async def get_weather_regions(ctx: discord.ApplicationContext, region: str):
         description=f"Region: {region}",
         color=discord.Color.teal()
     )
-    
+
     # Return the General Weather Forecast of the region
     periods = weatherData["items"][0]["periods"]
     for period in periods:
@@ -109,7 +111,7 @@ async def get_weather_regions(ctx: discord.ApplicationContext, region: str):
             name=f"{timeStart} - {timeEnd}",
             value=f"**Forecast:** {regionWeatherAtTime}\n"
         )
-    
+
     await ctx.respond(embed=embed)
 
 # Run the Bot
