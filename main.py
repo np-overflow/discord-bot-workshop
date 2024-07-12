@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import requests
 import random
+from datetime import datetime
 
 load_dotenv()
 bot = discord.Bot()
@@ -59,18 +60,57 @@ async def get_weather(ctx: discord.ApplicationContext):
     weatherData = requests.get(apiUrl).json()
     
     # Extract relevant information from the weather data
-    forecast = weatherData.get('items', [])[0].get('general', {}).get('forecast', 'No data available')
-    temperature = weatherData.get('items', [])[0].get('general', {}).get('temperature', {})
-    temperature_range = f"{temperature.get('low', 'N/A')}°C - {temperature.get('high', 'N/A')}°C"
+    forecast = weatherData["items"][0]["general"]["forecast"]
+    
+    temperature = weatherData["items"][0]["general"]["temperature"]
+    temperatureRangeText = f"{temperature['low']}°C - {temperature['high']}°C"
+    
+    wind = weatherData["items"][0]["general"]["wind"]
+    windText = f"{wind['speed']['low']} - {wind['speed']['high']} km/h -- {wind['direction']}"
     
     # Format the message
-    weather_message = (
+    weatherMessage = (
         f"**24-Hour Weather Forecast**\n"
         f"Forecast: {forecast}\n"
-        f"Temperature: {temperature_range}\n"
+        f"Temperature: {temperatureRangeText}\n"
+        f"Wind: {windText}\n"
     )
     
-    await ctx.respond(weather_message)
+    await ctx.respond(weatherMessage)
+
+# Advanced Weather Fetching using Slash Commands with Subgroups
+@bot.slash_command(name="weatherregions", description="Get the 24h weather forecast for Singapore, with REGIONS")
+async def get_weather_regions(ctx: discord.ApplicationContext, region: str):
+    # Check if the region is valid
+    if region not in ['west', 'east', 'central', 'south', 'north']:
+        await ctx.respond("Invalid region! Please choose from west, east, central, south, north.")
+        return
     
+    # Make a Request to the Weather API
+    apiUrl = "https://api.data.gov.sg/v1/environment/24-hour-weather-forecast"
+    weatherData = requests.get(apiUrl).json()
+    
+    # Create the Formatted Message using Embed
+    embed = discord.Embed(
+        title="24-Hour Weather Forecast", 
+        description=f"Region: {region}",
+        color=discord.Color.teal()
+    )
+    
+    # Return the General Weather Forecast of the region
+    periods = weatherData["items"][0]["periods"]
+    for period in periods:
+        # Format the Timestamps
+        timeStart = datetime.fromisoformat(period['time']['start']).strftime('%m-%d %H:%M')
+        timeEnd = datetime.fromisoformat(period['time']['end']).strftime('%m-%d %H:%M')
+        regionWeatherAtTime = period['regions'][region]
+        
+        embed.add_field(
+            name=f"{timeStart} - {timeEnd}",
+            value=f"**Forecast:** {regionWeatherAtTime}\n"
+        )
+    
+    await ctx.respond(embed=embed)
+
 # Run the Bot
 bot.run(os.getenv('TOKEN'))
